@@ -92,6 +92,7 @@
                     read: function (x) {
                         if (Sk.builtinFiles === undefined || Sk.builtinFiles['files'][x] === undefined)
                                 throw 'File not found: "' + x + '"';
+
                         return Sk.builtinFiles['files'][x];
                     },
                     debugout: console.log
@@ -105,6 +106,7 @@
                 this.v = 42;
                 this.__class__ = CustomObject;
                 this['v'] = this.v;
+
                 return this;
             };
             Sk.builtin.CustomObject = CustomObject;
@@ -119,10 +121,13 @@
             );
             Sk.builtins.CustomObject = Sk.builtin.CustomObject;
 
-            Sk.builtin.customFunction = new Sk.builtin.func(function (a, b) {
-                console.log('customFunction', a, b, a.v / b.v);
-                return a.v / b.v;
-            });
+            Sk.builtin.customFunction = new Sk.builtin.func(
+                function (a, b) {
+                    console.log('customFunction', a, b, a.v / b.v);
+
+                    return a.v / b.v;
+                }
+            );
             Sk.builtins.customFunction = Sk.builtin.customFunction;
 
             Sk.builtin.customInstance = {
@@ -163,10 +168,10 @@
                         '    if n <= 1:\n' +
                         '        return n\n' +
                         '    else:\n' +
-                        '        return(fib(n-1) + fib(n-2))\n' +
-                        'nterms = 10\n' +
+                        '        return fib(n - 1) + fib(n - 2)\n' +
+                        'n = 10\n' +
                         'print("Fibonacci sequence:")\n' +
-                        'for i in range(nterms):\n' +
+                        'for i in range(n):\n' +
                         '    print(fib(i))\n'/* +
                         '\n' +
                         'co = CustomObject()\n' +
@@ -180,7 +185,7 @@
             // The evaluation procedure.
             function doEval () {
                 if (!editor) {
-                    output.innerText += 'Not ready yet\n';
+                    output.innerHTML += 'Not ready yet\n';
 
                     return;
                 }
@@ -191,7 +196,7 @@
                     }
                 ).then(
                     function (mod) {
-                        console.log('success');
+                        console.log('Success');
                     },
                     function (err) {
                         console.log(err.toString(), err);
