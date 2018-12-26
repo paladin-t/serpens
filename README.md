@@ -1,6 +1,6 @@
 ## Serpens - an in-browser Python playground
 
-[Click to run](https://paladin-t.github.io/serpens/index.html)
+[Click to run](https://paladin-t.github.io/serpens/)
 
 ### Credits
 
