@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Serpens Playground</title>
+        <style type="text/css">
+            body {
+                margin: 0; padding: 0;
+                background-color: rgb(77, 88, 100);
+                font: 14px Helvetica, Arial, sans-serif;
+            }
+            .button {
+                padding: 5px 20px 5px 20px;
+                border-radius: 6px;
+                color: #ffffff;
+                background: #1e1e1e;
+                font-size: 14px;
+                text-decoration: none;
+            }
+            .button:hover {
+                background: #7c7c7c;
+                text-decoration: none;
+            }
+            #page {
+                width: 600px;
+                margin: 2em auto; padding: 20px 50px;
+                border-radius: 1em;
+                background-color: #fff;
+            }
+            #content {
+                position: relative;
+            }
+            #input {
+                width: auto; height: 320px;
+                resize: vertical;
+                overflow: hidden;
+            }
+            #output {
+                width: 100%; height: 240px;
+                resize: vertical;
+                border: none;
+                color: #ffffff;
+                background-color: #1e1e1e;
+            }
+            a:link, a:visited { color: #69c; text-decoration: none; }
+            @media (max-width: 700px) {
+                body { background-color: #fff; }
+                #page {
+                    width: auto;
+                    margin: 0 auto; padding: 1em;
+                    border-radius: 0;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="page">
+            <div id="content">
+                <p align="center">
+                    Input
+                    <br />
+                    <div id="input"></div>
+                </p>
+                <p align="center">
+                    Output
+                    <br />
+                    <textarea readonly id="output" rows="8"></textarea>
+                </p>
+            </div>
+            <div id="controls">
+                <p align="center">
+                    <input id="run" type="button" class="button" value="Run" onclick="doEval();" />
+                    <input id="clear" type="button" class="button" value="Clear" onclick="document.getElementById('output').value = '';" />
+                </p>
+            </div>
+            <p align="center"><a href="https://github.com/paladin-t/serpens">Serpens</a>, an in-browser Python playground</p>
+        </div>
+        <script type="text/javascript" src="skulpt.min.js"></script>
+        <script type="text/javascript" src="skulpt-stdlib.js"></script>
+        <script type="text/javascript" src="monaco/min/vs/loader.js"></script>
+        <script type="text/javascript">
+            // Prepares the environment.
+            var output = document.getElementById('output');
+            Sk.python3 = true;
+            Sk.configure(
+                {
+                    output: function (text) {
+                        output.innerHTML += text;
+                        output.scrollTop = output.scrollHeight;
+                    },
+                    read: function (x) {
+                        if (Sk.builtinFiles === undefined || Sk.builtinFiles['files'][x] === undefined)
+                                throw 'File not found: "' + x + '"';
+                        return Sk.builtinFiles['files'][x];
+                    },
+                    debugout: console.log
+                }
+            );
+
+            var CustomObject = function () {
+                if (!(this instanceof CustomObject)) {
+                    return new CustomObject();
+                }
+                this.v = 42;
+                this.__class__ = CustomObject;
+                this['v'] = this.v;
+                return this;
+            };
+            Sk.builtin.CustomObject = CustomObject;
+            Sk.abstr.setUpInheritance('CustomObject', Sk.builtin.CustomObject, Sk.builtin.object);
+            Sk.builtin.CustomObject.prototype['$r'] = function () {
+                return new Sk.builtin.str('(' + 'CustomObject' + ')');
+            };
+            Sk.builtin.CustomObject.prototype.memberFunction = new Sk.builtin.func(
+                function (self) {
+                    console.log('memberFunction', self);
+                }
+            );
+            Sk.builtins.CustomObject = Sk.builtin.CustomObject;
+
+            Sk.builtin.customFunction = new Sk.builtin.func(function (a, b) {
+                console.log('customFunction', a, b, a.v / b.v);
+                return a.v / b.v;
+            });
+            Sk.builtins.customFunction = Sk.builtin.customFunction;
+
+            Sk.builtin.customInstance = {
+                v: 42,
+                __class__: Sk.builtin.object
+            };
+            Sk.builtin.customInstance['v'] = Sk.builtin.customInstance.v
+            Sk.abstr.setUpInheritance('customInstance', Sk.builtin.customInstance, Sk.builtin.object);
+            Sk.builtin.customInstance.prototype.customFunction = new Sk.builtin.func(
+                function () {
+                    console.log('customInstance.customFunction');
+                }
+            );
+            Sk.builtins.customInstance = Sk.builtin.customInstance;
+
+            // Loads the code editor.
+            var editor = null;
+            require.config({ paths: { vs: 'monaco/min/vs' } });
+            require(
+                ['vs/editor/editor.main'],
+                function () {
+                    editor = monaco.editor.create(
+                        document.getElementById('input'),
+                        {
+                            language: 'python',
+                            lineNumbers: 'on',
+                            roundedSelection: true,
+                            scrollBeyondLastLine: false,
+                            readOnly: false,
+                            theme: 'vs-dark',
+                            minimap: { enabled: true },
+                            automaticLayout: true
+                        }
+                    );
+
+                    var code =
+                        'def fib(n):\n' +
+                        '    if n <= 1:\n' +
+                        '        return n\n' +
+                        '    else:\n' +
+                        '        return(fib(n-1) + fib(n-2))\n' +
+                        'nterms = 10\n' +
+                        'print("Fibonacci sequence:")\n' +
+                        'for i in range(nterms):\n' +
+                        '    print(fib(i))\n'/* +
+                        '\n' +
+                        'co = CustomObject()\n' +
+                        'co.memberFunction()\n' +
+                        'customFunction(22, 7)\n' +
+                        'customInstance.customFunction()\n'*/;
+                    editor.setValue(code);
+                }
+            );
+
+            // The evaluation procedure.
+            function doEval () {
+                if (!editor) {
+                    output.innerText += 'Not ready yet\n';
+
+                    return;
+                }
+
+                Sk.misceval.asyncToPromise(
+                    function () {
+                        return Sk.importMainWithBody("<stdin>", true, editor.getValue(), true);
+                    }
+                ).then(
+                    function (mod) {
+                        console.log('success');
+                    },
+                    function (err) {
+                        console.log(err.toString(), err);
+                        output.innerHTML += err.toString();
+                        output.scrollTop = output.scrollHeight;
+                    }
+                );
+            }
+        </script>
+    </body>
+</html>
