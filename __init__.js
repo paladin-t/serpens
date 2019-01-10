@@ -8,7 +8,7 @@ var $builtinmodule = function (name) {
     };
     mod.moduleFunction = new Sk.builtin.func(moduleFunction);
 
-    var MODULE_OBJECT = "ModuleObject";
+    var MODULE_OBJECT = 'ModuleObject';
     var ModuleObject = function ($gbl, $loc) {
         $loc.__init__ = new Sk.builtin.func(
             function (self, a, b) {
@@ -25,7 +25,7 @@ var $builtinmodule = function (name) {
 
         $loc.__getattr__ = new Sk.builtin.func(
             function (self, name) {
-                if (name != null && (Sk.builtin.checkString(name) || typeof name === "string")) {
+                if (name != null && (Sk.builtin.checkString(name) || typeof name === 'string')) {
                     var _name = name;
 
                     // Gets JavaScript string.
@@ -50,13 +50,13 @@ var $builtinmodule = function (name) {
                 // If we have not returned yet, try the genericgetattr.
                 var r, f, ret;
                 if (self.tp$getattr !== undefined) {
-                    f = self.tp$getattr("__getattribute__");
+                    f = self.tp$getattr('__getattribute__');
                 }
                 if (f !== undefined) {
                     ret = Sk.misceval.callsimOrSuspend(f, new Sk.builtin.str(_name));
                 }
                 if (r === undefined) {
-                    throw new Sk.builtin.AttributeError("'" + Sk.abstr.typeName(self) + "' object has no attribute '" + _name + "'");
+                    throw new Sk.builtin.AttributeError('"' + Sk.abstr.typeName(self) + '" object has no attribute "' + _name + '"');
                 }
 
                 return r;
@@ -65,7 +65,7 @@ var $builtinmodule = function (name) {
 
         $loc.__setattr__ = new Sk.builtin.func(
             function (self, name, value) {
-                if (name != null && (Sk.builtin.checkString(name) || typeof name === "string")) {
+                if (name != null && (Sk.builtin.checkString(name) || typeof name === 'string')) {
                     var _name = name;
 
                     // Gets JavaScript string.
@@ -83,8 +83,7 @@ var $builtinmodule = function (name) {
                     }
                 }
 
-                // builtin: --> all is readonly (I am not happy with this)
-                throw new Sk.builtin.AttributeError("'ModuleObject' object attribute '" + name + "' is readonly");
+                throw new Sk.builtin.AttributeError('"ModuleObject" object attribute "' + name + '" is readonly or invalid');
             }
         );
 
@@ -107,16 +106,15 @@ var $builtinmodule = function (name) {
             };
         }
 
-        $loc.__add__ = new Sk.builtin.func(makeBinaryOp("add"));
-        $loc.__radd__ = new Sk.builtin.func(makeBinaryOp("add"));
-        $loc.__iadd__ = new Sk.builtin.func(makeBinaryOp("add"));
+        $loc.__add__ = new Sk.builtin.func(makeBinaryOp('add'));
+        $loc.__radd__ = new Sk.builtin.func(makeBinaryOp('add'));
+        $loc.__iadd__ = new Sk.builtin.func(makeBinaryOp('add'));
     };
-
     mod[MODULE_OBJECT] = Sk.misceval.buildClass(mod, ModuleObject, MODULE_OBJECT, [ ]);
 
     mod.doNotExist = new Sk.builtin.func(
         function () {
-            throw new Sk.builtin.NotImplementedError("`doNotExist` is not yet implemented");
+            throw new Sk.builtin.NotImplementedError('`doNotExist` is not yet implemented');
         }
     );
 
