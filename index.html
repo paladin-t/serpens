@@ -143,6 +143,12 @@
             );
             Sk.builtins.customInstance = Sk.builtin.customInstance;
 
+            Sk.externalLibraries = {
+                CustomModule : {
+                    path: './__init__.js'
+                }
+            };
+
             // Loads the code editor.
             var editor = null;
             require.config({ paths: { vs: 'monaco/min/vs' } });
@@ -174,10 +180,22 @@
                         'for i in range(n):\n' +
                         '    print(fib(i))\n'/* +
                         '\n' +
+                        'print("Custom values")\n' +
                         'co = CustomObject()\n' +
                         'co.memberFunction()\n' +
                         'customFunction(22, 7)\n' +
-                        'customInstance.customFunction()\n'*/;
+                        'customInstance.customFunction()\n' +
+                        '\n' +
+                        'print("Custom module")\n' +
+                        'from CustomModule import *\n' +
+                        'moduleFunction(22, 7)\n' +
+                        'obj = ModuleObject(1, 2)\n' +
+                        'obj.a = 22\n' +
+                        'obj.b = 7\n' +
+                        'tmp = obj.__add__(ModuleObject(355, 113))\n' +
+                        'print(obj.a / obj.b)\n' +
+                        'print(len(obj), str(obj))\n'*/
+                        ;
                     editor.setValue(code);
                 }
             );
