@@ -36,6 +36,10 @@
                 resize: vertical;
                 overflow: hidden;
             }
+            #canvas {
+                margin: 0 0 10px 0; border: none;
+                display: none;
+            }
             #output {
                 width: 100%; height: 240px;
                 resize: vertical;
@@ -65,13 +69,14 @@
                 <p align="center">
                     Output
                     <br />
+                    <div id="canvas"></div>
                     <textarea readonly id="output" rows="8"></textarea>
                 </p>
             </div>
             <div id="controls">
                 <p align="center">
                     <input id="run" type="button" class="button" value="Run" onclick="doEval();" />
-                    <input id="clear" type="button" class="button" value="Clear" onclick="document.getElementById('output').innerHTML = '';" />
+                    <input id="clear" type="button" class="button" value="Clear" onclick="doClear();" />
                 </p>
             </div>
             <p align="center"><a href="https://github.com/paladin-t/serpens">Serpens</a>, an in-browser Python playground</p>
@@ -81,6 +86,8 @@
         <script type="text/javascript" src="monaco/min/vs/loader.js"></script>
         <script type="text/javascript">
             // Prepares the environment.
+            var input = document.getElementById('input');
+            var canvas = document.getElementById('canvas');
             var output = document.getElementById('output');
             Sk.python3 = true;
             Sk.configure(
@@ -98,7 +105,13 @@
                     debugout: console.log
                 }
             );
+            Sk.TurtleGraphics = {
+                target: 'canvas',
+                width: 640,
+                height: 480
+            };
 
+            // Exposes some objects for test.
             var CustomObject = function () {
                 if (!(this instanceof CustomObject)) {
                     return new CustomObject();
@@ -156,7 +169,7 @@
                 ['vs/editor/editor.main'],
                 function () {
                     editor = monaco.editor.create(
-                        document.getElementById('input'),
+                        input,
                         {
                             language: 'python',
                             lineNumbers: 'on',
@@ -169,17 +182,44 @@
                         }
                     );
 
-                    var code =
+                    var codeFib =
+                        'print("Fibonacci sequence")\n' +
                         'def fib(n):\n' +
                         '    if n <= 1:\n' +
                         '        return n\n' +
                         '    else:\n' +
                         '        return fib(n - 1) + fib(n - 2)\n' +
                         'n = 10\n' +
-                        'print("Fibonacci sequence:")\n' +
                         'for i in range(n):\n' +
-                        '    print(fib(i))\n'/* +
-                        '\n' +
+                        '    print(fib(i))\n';
+                    var codeTurtle =
+                        'print("Turtle graphics")\n' +
+                        'print("See the canvas above")\n' +
+                        'import turtle\n' +
+                        'wn = turtle.Screen()\n' +
+                        'wn.bgcolor("lightgreen")\n' +
+                        'tess = turtle.Turtle()\n' +
+                        'tess.color("hotpink")\n' +
+                        'tess.pensize(5)\n' +
+                        'alex = turtle.Turtle()\n' +
+                        'tess.forward(80)\n' +
+                        'tess.left(120)\n' +
+                        'tess.forward(80)\n' +
+                        'tess.left(120)\n' +
+                        'tess.forward(80)\n' +
+                        'tess.left(120)\n' +
+                        'tess.right(180)\n' +
+                        'tess.forward(80)\n' +
+                        'alex.forward(50)\n' +
+                        'alex.left(90)\n' +
+                        'alex.forward(50)\n' +
+                        'alex.left(90)\n' +
+                        'alex.forward(50)\n' +
+                        'alex.left(90)\n' +
+                        'alex.forward(50)\n' +
+                        'alex.left(90)\n' +
+                        'wn.exitonclick()\n';
+                    var codeCustom =
                         'print("Custom values")\n' +
                         'co = CustomObject()\n' +
                         'co.memberFunction()\n' +
@@ -194,13 +234,13 @@
                         'obj.b = 7\n' +
                         'tmp = obj.__add__(ModuleObject(355, 113))\n' +
                         'print(obj.a / obj.b)\n' +
-                        'print(len(obj), str(obj))\n'*/
-                        ;
+                        'print(len(obj), str(obj))\n';
+                    var code = [ codeFib, codeTurtle ].join('\n');
                     editor.setValue(code);
                 }
             );
 
-            // The evaluation procedure.
+            // The evaluation and clearing procedure.
             function doEval () {
                 if (!editor) {
                     output.innerHTML += 'Not ready yet\n';
@@ -210,6 +250,8 @@
 
                 Sk.misceval.asyncToPromise(
                     function () {
+                        doRelayout(true);
+
                         return Sk.importMainWithBody("<stdin>", true, editor.getValue(), true);
                     }
                 ).then(
@@ -222,6 +264,45 @@
                         output.scrollTop = output.scrollHeight;
                     }
                 );
+            }
+
+            function doClear () {
+                output.innerHTML = '';
+                doRelayout(false);
+            }
+
+            var layoutProc = null;
+            function doRelayout (init) {
+                if (layoutProc) {
+                    clearInterval(layoutProc);
+                    layoutProc = null;
+                    if (canvas.hasChildNodes()) {
+                        var nodes = canvas.childNodes;
+                        for (var i = nodes.length - 1; i >= 0; --i) {
+                            var node = nodes[i];
+                            canvas.removeChild(node);
+                        }
+                    }
+                    canvas.style.display = 'none';
+                }
+                if (init) {
+                    canvas.style.display = 'block';
+                    layoutProc = setInterval(
+                        function () {
+                            if (canvas.hasChildNodes()) {
+                                var nodes = canvas.childNodes;
+                                var height = (-canvas.offsetWidth / Sk.TurtleGraphics.width * Sk.TurtleGraphics.height).toString() + 'px';
+                                for (var i = 0; i < nodes.length; ++i) {
+                                    var node = nodes[i];
+                                    node.style.setProperty('width', 'calc(100%)');
+                                    if (i > 0)
+                                        node.style.setProperty('margin-top', height);
+                                }
+                            }
+                        },
+                        10
+                    );
+                }
             }
         </script>
     </body>
